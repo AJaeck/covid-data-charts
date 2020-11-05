@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JHU Time Data</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.4/dist/Chart.min.js"></script>
+</head>
+<body>
+
+    <canvas id="confirmed" max-width="100%" max-height="400"></canvas>
+    <canvas id="deaths" max-width="100%" max-height="400"></canvas>
+    <canvas id="recovered" max-width="100%" max-height="400"></canvas>
+
+    <script>
+        // JHU Repo: https://github.com/CSSEGISandData/COVID-19/tree/master/csse_covid_19_data/csse_covid_19_time_series
+        // raw CSV cases
+        const confiremdDatasrc = "https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_global.csv"
+        const deathDatasrc = "https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_deaths_global.csv"
+        const recoveredDatasrc = "https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_recovered_global.csv"
+
+        createChart();
+
+        async function createChart () {
+
+            const data = await getCOVIDdata();
+
+            const ctx1 = document.getElementById('confirmed').getContext('2d');
+            const ctx2 = document.getElementById('deaths').getContext('2d');
+            const ctx3 = document.getElementById('recovered').getContext('2d');
+
+            const myChart1 = new Chart(ctx1, {
+                type: 'line',
+                data: {
+                    labels: data.xDays,
+                    datasets: [{
+                        label: 'Overall Confirmed Ghana',
+                        data: data.yLabelC,
+                        backgroundColor: 'rgba(255, 153, 0, 0.2)',
+                        borderColor: 'rgba(255, 153, 0, 1)',
+                        borderWidth: 1
+                        },
+                        {
+                        label: 'Overall Confirmed Germany',
+                        data: data.yLabelC_GER,
+                        backgroundColor: 'rgba(128, 128, 128, 0.200)',
+                        borderColor: 'grey',
+                        borderWidth: 1  
+                        }
+                    ]
+                },
+                options: {
+                    scales: {
+                        yAxes: [{
+                            ticks: {
+                                beginAtZero: true
+                            }
+                        }],
+                        xAxes: [{
+                            ticks: {
+                                autoSkip: true,
+                                maxTicksLimit: 20
+                            }
+                        }]
+                    }
+                }
+            });
+            const myChart2 = new Chart(ctx2, {
+                type: 'line',
+                data: {
+                    labels: data.xDays,
+                    datasets: [{
+                        label: 'Total Deaths Ghana',
+                        data: data.yLabelD,
+                        backgroundColor: 'rgba(181, 13, 35, 0.20)',
+                        borderColor: 'rgba(181, 13, 35, 1',
+                        borderWidth: 1
+                        },
+                        {
+                        label: 'Total Deaths Germany',
+                        data: data.yLabelD_GER,
+                        backgroundColor: 'rgba(128, 128, 128, 0.20)',
+                        borderColor: 'grey',
+                        borderWidth: 1
+                        }
+                    ]
+                },
+                options: {
+                    scales: {
+                        yAxes: [{
+                            ticks: {
+                                beginAtZero: true
+                            }
+                        }],
+                        xAxes: [{
+                            ticks: {
+                                autoSkip: true,
+                                maxTicksLimit: 20
+                            }
+                        }]
+                    }
+                }
+            });
+            const myChart3 = new Chart(ctx3, {
+                type: 'line',
+                data: {
+                    labels: data.xDays,
+                    datasets: [{
+                        label: 'Total Recovered Ghana',
+                        data: data.yLabelR,
+                        backgroundColor: 'rgba(4, 87, 21, 0.2)',
+                        borderColor: '#045715',
+                        borderWidth: 1
+                        },
+                        {
+                        label: 'Total Recovered Germany',
+                        data: data.yLabelD_GER,
+                        backgroundColor: 'rgba(128, 128, 128, 0.20)',
+                        borderColor: 'grey',
+                        borderWidth: 1
+                        }   
+                    ]
+                },
+                options: {
+                    scales: {
+                        yAxes: [{
+                            ticks: {
+                                beginAtZero: true
+                            }
+                        }],
+                        xAxes: [{
+                            ticks: {
+                                autoSkip: true,
+                                maxTicksLimit: 20
+                            }
+                        }]
+                    }
+                }
+            });
+         };
+
+        async function getCOVIDdata() {
+
+            const xDays = []; //timeline
+            const yLabelC = []; //array of confirmed "C"
+            const yLabelC_GER = [];//array of confirmed "C" in GER   
+            const yLabelD = []; //array of confirmed "D"
+            const yLabelD_GER = [];//array of confirmed "D" in GER   
+            const yLabelR = [];//array of confirmed "R"        
+            const yLabelR_GER = [];//array of confirmed "R" in GER   
+
+            //confirmed cases CSV parsing
+            const csvDataC = await fetch(confiremdDatasrc); //fetch confirmed csv data from src
+            const dataC = await csvDataC.text(); //parse into txt
+
+            // organize data to output the dates for x-Axis
+            const dataXaxisC = dataC.split('\n'); // split breaks the data up into rows after every backspace (\n) and setup array
+            const rowsC = dataXaxisC.splice(1); // splice array into 2 with the first row data to go into own array
+            dataXaxisC.forEach(elt => {
+                const xDataC = elt.split(',').slice(56);
+                xDataC.forEach(elt =>{
+                    const day = elt.split(',');
+                    xDays.push(day);
+                }) 
+            })
+
+            //organize data to get array with confirmed cases for y-Axis
+            //Ghana
+            const dataYaxisC = dataC.split('\n') // split breaks the data up into rows after every backspace (\n) and setup array
+            .slice(132, 133); //remove rows from array index 0-132 and after 133 -> Only Ghana
+            dataYaxisC.forEach(elt => {
+                const yDataC = elt.split(',').slice(56);
+                yDataC.forEach(elt =>{
+                    const confirmed = elt.split(',');
+                    yLabelC.push(parseFloat(confirmed));
+                })         
+            });
+            //Germany
+            const dataYaxisC_GER = dataC.split('\n').slice(131, 132)
+            dataYaxisC_GER.forEach(elt => {
+                const yDataC_GER = elt.split(',').slice(56);
+                yDataC_GER.forEach(elt =>{
+                    const confirmed_GER = elt.split(',');
+                    yLabelC_GER.push(parseFloat(confirmed_GER));
+                })         
+            });
+
+
+            //death cases CSV parsing
+            const csvDataD = await fetch(deathDatasrc); 
+            const dataD = await csvDataD.text();
+
+            //Ghana
+            const dataYaxisD = dataD.split('\n').slice(132, 133);
+            dataYaxisD.forEach(elt => {
+                const yDataD = elt.split(',').slice(56);
+                yDataD.forEach(elt =>{
+                    const deaths = elt.split(',');
+                    yLabelD.push(parseFloat(deaths));
+                })         
+            });
+            //Germany
+            const dataYaxisD_GER = dataD.split('\n').slice(131, 132);
+            dataYaxisD_GER.forEach(elt => {
+                const yDataD_GER = elt.split(',').slice(56);
+                yDataD_GER.forEach(elt =>{
+                    const deaths_GER = elt.split(',');
+                    yLabelD_GER.push(parseFloat(deaths_GER));
+                })         
+            });
+
+            //death cases CSV parsing
+            const csvDataR = await fetch(recoveredDatasrc); 
+            const dataR = await csvDataR.text();
+
+            //Ghana
+            const dataYaxisR = dataR.split('\n').slice(119, 120);
+            dataYaxisR.forEach(elt => {
+                const yDataR = elt.split(',').slice(56);
+                yDataR.forEach(elt =>{
+                    const recovered = elt.split(',');
+                    yLabelR.push(parseFloat(recovered));
+                })      
+            });
+            //Germany
+            const dataYaxisR_GER = dataR.split('\n').slice(118, 119);
+            dataYaxisR_GER.forEach(elt => {
+                const yDataR_GER = elt.split(',').slice(56);
+                yDataR_GER.forEach(elt =>{
+                    const recovered_GER = elt.split(',');
+                    yLabelR_GER.push(parseFloat(recovered_GER));
+                })      
+            });
+
+
+
+            return {xDays, yLabelC, yLabelD, yLabelR, yLabelC_GER, yLabelD_GER, yLabelR_GER };
+        }
+
+        </script>
+    
+    <script>
+    </script>
+    
+</body>
+</html>
